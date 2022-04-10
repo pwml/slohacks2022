@@ -49,8 +49,8 @@ function NonProfitForm(props) {
             URLWebsite: '',
             Description: '',
             Email: '',
-            Phone: '',
-            MinimumDonation: '',
+            Phone: 0,
+            MinimumDonation: 0,
             URLLogo: '',
             Contacted: 0})
     } 
