@@ -1,121 +1,72 @@
-import { useState } from 'react';
 import './App.css';
+import React, {useState, useEffect} from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import NonProfitForm from './NonProfitForm';
+import axios from 'axios';
 
-function App(props) {
-    const [organization, setOrganization] = useState( 
-        {  
-            Name: '',
-            Category: '',
-            City: '',
-            State: '',
-            Website: '',
-            Description: '',
-            Email: '',
-            Phone: ''
+
+function App() {
+    const [posts, setPosts] = useState([]);
+
+    async function fetchAllPosts(){ //async uses an await call (non blocking, allows front end to run other things if needed)
+        try {
+           const response = await axios.get('http://localhost:8000/posts');
+           return response.data;  
         }
-   );
-
-   function handleChangeOrganization(event, setOrganization, organization) { //when the user types in/selects a value, the value is populated 
-    const value = event.target.value;
-    setOrganization({
-        ...organization, 
-        [event.target.name]: value
-    });
-}
-
-    //only accepts numbers as input 
-    function handlePhoneNumber(event) {
-        const value = event.target.value.replace(/\D/g, "");
-        setOrganization({
-            ...organization,
-            [event.target.name]: value
-        })
-    };
-
-    //checks length of phone number -> cannot be more than 10
-    const maxLengthCheck = (object) => {
-        if (object.target.value.length > object.target.maxLength) {
-            object.target.value = object.target.value.slice(0, object.target.maxLength)
+        catch (error){
+           //We're not handling errors. Just logging into the console.
+           console.log(error); 
+           return false;         
         }
     }
 
-    function submitForm() {
-        console.log(organization);
-        props.handleSubmit(organization); //send values to backend
-        setOrganization({ //reset form to blanks
-            Name: '',
-            Category: '',
-            City: '',
-            State: '',
-            URLWebsite: '',
-            Description: '',
-            Email: '',
-            Phone: '',
-            MinimumDonation: '',
-            URLLogo: '',
-            Contacted: 0})
-    } 
+    async function makePostCall(post){
+        try {
+            const response = await axios.post('http://localhost:8000/posts', post);
+            return response;
+        }
+        catch (error) {
+            console.log(error);
+            return false;
+        }
+    }
 
-return ( //NEED TO CHANGE THE VALUES AND INPUT INFO IN ROUND TRIP (TRIP 1 AND TRIP 2 SHOULD HAVE SEPARATE INFOS MIGHT CHANGE BASED ON SCHEMA)
-<div>
-    <form className="container">
-        <label id="heading">want to include your nonprofit on our website? please fill out your information below!</label>
-        <br></br>
-        <label id="organizationField">Name of nonprofit organization</label>
-            <input
-                className="inputBox"
-                type="text"
-                name="name"
-                id="name"
-                value={organization.Name}
-                onChange={handleChangeOrganization} />
-        <br></br>
-        <label id="organizationField">Category of nonprofit organization</label>
-            {/* TODO: need to research how to do category */}
-        <br></br>
-        <label id="organizationField">Location of nonprofit organization</label>
-        <br></br>
-            {/* TODO: need to research how to do location */}
-        <label id="organizationField">Website</label>
-            <input
-                className="inputBox"
-                type="text"
-                name="website"
-                id="website"
-                value={organization.Website}
-                onChange={handleChangeOrganization} />
-        <br></br>
-        <label id="organizationField">Please describe your nonprofit organization</label>
-            <input
-                className="inputBox"
-                type="text"
-                name="description"
-                id="description"
-                value={organization.Description}
-                onChange={handleChangeOrganization} />
-        <br></br>
-        <label id="subheading">How can we contact you?</label>
-        <label>Email address</label>
-            <input
-                className="inputBox"
-                type="text"
-                name="email"
-                id="email"
-                value={organization.Email}
-                onChange={handleChangeOrganization} />
-        <label>Phone</label>
-            <input
-                className="inputBox"
-                type="text"
-                name="phone"
-                id="phone"
-                value={organization.Phone}
-                onInput={maxLengthCheck}
-                onChange={handlePhoneNumber} />
-        <input type="button" value="Submit" className="button" onClick={submitForm} />
-    </form>
-</div>
-); 
+    async function makeUserCall(user){
+        try {
+            const response = await axios.post('http://localhost:8000/users', user);
+            return response;
+        }
+        catch (error) {
+            console.log(error);
+            return false;
+        }
+    }
+
+    function updateList(post) { //only update if POST call is successful (depending on backend)
+        makePostCall(post).then( result => {
+        if (result && result.status === 201)
+           setPosts([...posts, result.data] );
+        });
+    }
+
+    //hook to be called only when we render for the first time
+    useEffect(() => {
+        fetchAllPosts().then( result => {
+           if (result)
+              setPosts(result);
+         });
+    }, [] );
+        
+    return ( //can only return 1 div or as a parent with sub divs
+        <div>
+            <BrowserRouter>
+            <Routes>
+                <Route path="/" />
+                <Route path="/partner-form" element={<NonProfitForm posts={posts} />} />
+            </Routes>
+            </BrowserRouter> 
+        </div>
+    ); 
 }
 
-export default App;
+export default App; //makes the component available to be imported to other modules
